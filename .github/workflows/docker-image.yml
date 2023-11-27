@@ -20,4 +20,4 @@ jobs:
       run: docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
 
     - name: Build the Docker image
-      run: docker build . --file Dockerfile --tag nitinbhardwaj12/java-githubactions
+      run: docker build . --file Dockerfile --tag nitinbhardwaj12/pythonapp:latest
