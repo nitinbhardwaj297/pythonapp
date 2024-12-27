@@ -22,7 +22,12 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
-        
+      - name: Log in to Amazon ECR
+        id: ecr-login
+        run: |
+          aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin 867344428970.dkr.ecr.us-east-1.amazonaws.com/pythonapp
+      
+      
       # Build the Docker image
       - name: Build Docker image
         run: |
