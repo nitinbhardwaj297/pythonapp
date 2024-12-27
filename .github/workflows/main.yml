@@ -1,0 +1,51 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build_and_push_to_ecr:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout the code
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Login to AWS ECR
+      - name: Login to AWS ECR
+        uses: aws-actions/amazon-ecr-login@v1
+
+      # Build the Docker image
+      - name: Build Docker image
+        run: |
+          docker build -t 867344428970.dkr.ecr.us-east-1.amazonaws.com/pythonapp .
+
+      # Push the Docker image to ECR
+      - name: Push Docker image to ECR
+        run: |
+          docker push 867344428970.dkr.ecr.us-east-1.amazonaws.com/pythonapp
+
+  deploy_to_ec2:
+    needs: build_and_push_to_ecr
+    runs-on: ubuntu-latest
+
+    steps:
+      # SSH into the EC2 instance and deploy the container
+      - name: SSH and Deploy
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            echo "Logging in to ECR..."
+            aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 867344428970.dkr.ecr.us-east-1.amazonaws.com
+            echo "Pulling the latest image..."
+            docker pull 867344428970.dkr.ecr.us-east-1.amazonaws.com/pythonapp
+            echo "Running the container..."
+            docker stop pythonapp || true
+            docker rm pythonapp || true
+            docker run -d --name pythonapp -p 5000:5000 867344428970.dkr.ecr.us-east-1.amazonaws.com/pythonapp
